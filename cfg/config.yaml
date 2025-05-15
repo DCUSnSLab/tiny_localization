@@ -1,0 +1,34 @@
+# 토픽 설정 (Topic Settings)
+topics: 
+  gps_fix_topic: "/ublox_gps/fix"       # GPS fix topic from ublox receiver (sensor_msgs/NavSatFix)
+  imu_topic: "/vectornav/IMU"           # IMU topic from VectorNav sensor (sensor_msgs/Imu)
+  velocity_topic: "/vehicle/velocity"    # Vehicle velocity topic (std_msgs/Float64)
+  output_odom_topic: "/odom/ekf_single"  # 출력 오도메트리 토픽 | Output odometry topic
+  output_utm_topic: "/current_utm_relative_position"  # 출력 UTM 위치 토픽 | Output UTM position topic
+
+# GPS 방위각 계산 관련 설정 (GPS Heading Calculation Settings)
+gps_heading:
+  min_distance_for_heading: 0.1  # 방위각 계산을 위한 최소 GPS 이동 거리 (미터) | Minimum GPS distance threshold for heading calculation (meters)
+  min_speed_for_heading: 0.6     # 방위각 신뢰도를 위한 최소 속도 (m/s) | Minimum speed threshold for reliable heading calculation (m/s)
+
+# EKF 프로세스 노이즈 설정 (Q 행렬) (EKF Process Noise Settings - Q Matrix)
+process_noise:
+  x: 0.05    # x 위치 프로세스 노이즈 | Process noise for x position
+  y: 0.05    # y 위치 프로세스 노이즈 | Process noise for y position
+  yaw: 0.001 # 방향 프로세스 노이즈 | Process noise for heading/yaw
+
+# EKF 측정 노이즈 설정 (R 행렬) (EKF Measurement Noise Settings - R Matrix)
+measurement_noise:
+  position:
+    x: 0.1    # x 위치 측정 노이즈 | Measurement noise for x position
+    y: 0.1    # y 위치 측정 노이즈 | Measurement noise for y position
+  heading: 0.7 # 방향 측정 노이즈 | Measurement noise for heading/yaw
+
+# 초기 EKF 설정 (Initial EKF Settings)
+ekf_initial:
+  position_uncertainty: 1.0   # 초기 위치 불확실성 | Initial position uncertainty
+  heading_uncertainty: 1.0    # 초기 방향 불확실성 | Initial heading uncertainty
+
+# TF 브로드캐스트 설정 (TF Broadcasting Settings)
+tf_broadcast:
+  enabled: true               # TF 브로드캐스트 활성화 여부 | Enable TF broadcasting for all frames 

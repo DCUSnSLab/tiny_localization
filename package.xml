@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>tiny_localization</name>
+  <version>0.1.0</version>
+  <description>The tiny_localization package</description>
+
+  <!-- One maintainer tag required, multiple allowed, one person per tag -->
+  <!-- Example:  -->
+  <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
+  <maintainer email="hanbaek@kakao.com">hanbaek</maintainer>
+
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <!-- Commonly used license strings: -->
+  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <license>TODO</license>
+
+
+  <!-- Url tags are optional, but multiple are allowed, one per tag -->
+  <!-- Optional attribute type can be: website, bugtracker, or repository -->
+  <!-- Example: -->
+  <!-- <url type="website">http://wiki.ros.org/tiny_localization</url> -->
+
+
+  <!-- Author tags are optional, multiple are allowed, one per tag -->
+  <!-- Authors do not have to be maintainers, but could be -->
+  <!-- Example: -->
+  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
+
+
+  <!-- The *depend tags are used to specify dependencies -->
+  <!-- Dependencies can be catkin packages or system dependencies -->
+  <!-- Examples: -->
+  <!-- Use depend as a shortcut for packages that are both build and exec dependencies -->
+  <!--   <depend>roscpp</depend> -->
+  <!--   Note that this is equivalent to the following: -->
+  <!--   <build_depend>roscpp</build_depend> -->
+  <!--   <exec_depend>roscpp</exec_depend> -->
+  <!-- Use build_depend for packages you need at compile time: -->
+  <!--   <build_depend>message_generation</build_depend> -->
+  <!-- Use build_export_depend for packages you need in order to build against this package: -->
+  <!--   <build_export_depend>message_generation</build_export_depend> -->
+  <!-- Use buildtool_depend for build tool packages: -->
+  <!--   <buildtool_depend>catkin</buildtool_depend> -->
+  <!-- Use exec_depend for packages you need at runtime: -->
+  <!--   <exec_depend>message_runtime</exec_depend> -->
+  <!-- Use test_depend for packages you need only for testing: -->
+  <!--   <test_depend>gtest</test_depend> -->
+  <!-- Use doc_depend for packages you need only for building documentation: -->
+  <!--   <doc_depend>doxygen</doc_depend> -->
+  <buildtool_depend>catkin</buildtool_depend>
+  <!-- ROS Core Dependencies -->
+  <depend>roscpp</depend>                  <!-- ROS C++ Client Library -->
+  <depend>rospy</depend>
+  <depend>sensor_msgs</depend>              <!-- IMU, GPS 데이터 -->
+  <depend>geometry_msgs</depend>            <!-- Quaternion 변환 -->
+  <depend>nav_msgs</depend>                 <!-- Odometry 메시지 -->
+  <depend>tf</depend>                       <!-- tf 변환 -->
+  <depend>tf2</depend>                      <!-- tf2 변환 -->
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>        <!-- tf2에서 geometry_msgs 지원 -->
+  <depend>message_generation</depend>       <!-- 메시지 생성 -->
+  <depend>message_runtime</depend>          <!-- 런타임 메시지 지원 -->
+
+  <!-- GPS 관련 메시지 -->
+  <depend>ublox_msgs</depend>               <!-- Ublox GPS 메시지 -->
+  <depend>hunter_msgs</depend>              <!-- 차량 속도 메시지 -->
+
+  <!-- GeographicLib (UTM 변환용) -->
+  <depend>GeographicLib</depend>
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>
