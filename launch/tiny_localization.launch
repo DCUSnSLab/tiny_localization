@@ -1,32 +1,31 @@
 <?xml version="1.0"?>
 <launch>
-    <!-- 노드 이름 및 네임스페이스 설정 -->
+    <!-- Node name and namespace settings -->
     <arg name="node_name" default="tiny_localization_node" />
     <arg name="node_namespace" default="localization" />
     
-    <!-- config 파일 로드 -->
+    <!-- Load config file -->
     <arg name="config_file" default="$(find tiny_localization)/cfg/config.yaml" />
-    <rosparam command="load" file="$(arg config_file)" />
-
-    <!-- TF 브로드캐스트 활성화 여부 (명령줄에서 override 가능) -->
-    <arg name="tf_broadcast_enabled" default="true" doc="TF 브로드캐스트 활성화 여부 (기본값: true)" />
+    <rosparam command="load" file="$(arg config_file)" ns="$(arg node_namespace)" />
     
-    <!-- 사용자에게 설정 정보 출력 -->
+    <!-- TF broadcast enable flag (can be overridden from command line) -->
+    <arg name="tf_broadcast_enabled" default="true" doc="TF broadcast enable flag (default: true)" />
+    
+    <!-- Display configuration information to user -->
     <node pkg="rostopic" type="rostopic" name="tf_config_info" 
           args="pub -1 /tf_config_info std_msgs/String 'TF broadcasting is $(arg tf_broadcast_enabled)'" 
           output="screen" />
     
-    <!-- 노드 시작 -->
+    <!-- Start nodes -->
     <node pkg="tiny_localization" type="tiny_localization_node" name="$(arg node_name)" ns="$(arg node_namespace)" output="screen">
-        <!-- config.yaml 파일에서 설정된 파라미터를 사용하므로 별도의 파라미터 지정 불필요 -->
     </node>
 
-    <!-- TF 브로드캐스트 노드들 -->
+    <!-- TF broadcast nodes -->
     <group if="$(arg tf_broadcast_enabled)">
-        <!-- odom_utm -> base_link TF 브로드캐스트 -->
+        <!-- odom_utm -> base_link TF broadcast -->
         <node pkg="tiny_localization" type="odom_frame_broadcast.py" name="odom_frame_broadcaster" output="screen" />
 
-        <!-- gps_utm -> odom_utm TF 브로드캐스트 -->
+        <!-- gps_utm -> odom_utm TF broadcast -->
         <node pkg="tiny_localization" type="gps_frame_broadcast.py" name="gps_frame_broadcaster" output="screen" />
     </group>
 </launch>

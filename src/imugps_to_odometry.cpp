@@ -22,102 +22,129 @@ IMUGPSToOdometry::IMUGPSToOdometry() :
   ros::NodeHandle private_nh("~");
   ros::NodeHandle nh;
 
-  std::string gps_fix_topic, imu_topic, velocity_topic;
-  nh.param<std::string>("topics/gps_fix_topic", gps_fix_topic, "/ublox_gps/fix");
-  nh.param<std::string>("topics/imu_topic", imu_topic, "/vectornav/IMU");
-  nh.param<std::string>("topics/velocity_topic", velocity_topic, "/vehicle/velocity");
-  
-  // 출력 토픽 이름을 매개변수로 가져오기
-  std::string output_odom_topic, output_utm_topic;
-  nh.param<std::string>("topics/output_odom_topic", output_odom_topic, "/odom/ekf_single");
-  nh.param<std::string>("topics/output_utm_topic", output_utm_topic, "/current_utm_relative_position");
-  
-  // 방위각 계산 관련 설정 - 전역 네임스페이스에서 직접 가져오기
-  double min_distance_for_heading;
-  if (nh.getParam("/gps_heading/min_distance_for_heading", min_distance_for_heading)) {
-    min_gps_distance_for_heading_ = min_distance_for_heading;
-    ROS_INFO("Loaded min_distance_for_heading from parameter server: %f", min_gps_distance_for_heading_);
+  // Topic settings
+  std::string gps_fix_topic = "/ublox_gps/fix";
+  std::string imu_topic = "/vectornav/IMU";
+  std::string velocity_topic = "/vehicle/velocity";
+  std::string output_odom_topic = "/odom/ekf";
+  std::string output_utm_topic = "/current_utm_relative_position";
+
+  if (nh.getParam("topics/gps_fix_topic", gps_fix_topic)) {
+    ROS_INFO("Loaded gps_fix_topic: %s", gps_fix_topic.c_str());
   } else {
-    ROS_WARN("Failed to get min_distance_for_heading from parameter server, using default (0.0)");
-  }
-  
-  min_speed_for_heading_ = 0.6; // default value
-  if (nh.getParam("/gps_heading/min_speed_for_heading", min_speed_for_heading_)) {
-    ROS_INFO("Loaded min_speed_for_heading from parameter server: %f", min_speed_for_heading_);
-  } else {
-    ROS_WARN("Failed to get min_speed_for_heading from parameter server, using default (0.7)");
+    ROS_WARN("Failed to get gps_fix_topic, using default: %s", gps_fix_topic.c_str());
   }
 
-  // EKF 프로세스 노이즈 (Q 행렬)
-  double process_noise_x = 0.05;
-  double process_noise_y = 0.05;
-  double process_noise_yaw = 0.001;
-  
-  if (nh.getParam("/process_noise/x", process_noise_x)) {
+  if (nh.getParam("topics/imu_topic", imu_topic)) {
+    ROS_INFO("Loaded imu_topic: %s", imu_topic.c_str());
+  } else {
+    ROS_WARN("Failed to get imu_topic, using default: %s", imu_topic.c_str());
+  }
+
+  if (nh.getParam("topics/velocity_topic", velocity_topic)) {
+    ROS_INFO("Loaded velocity_topic: %s", velocity_topic.c_str());
+  } else {
+    ROS_WARN("Failed to get velocity_topic, using default: %s", velocity_topic.c_str());
+  }
+
+  if (nh.getParam("topics/output_odom_topic", output_odom_topic)) {
+    ROS_INFO("Loaded output_odom_topic: %s", output_odom_topic.c_str());
+  } else {
+    ROS_WARN("Failed to get output_odom_topic, using default: %s", output_odom_topic.c_str());
+  }
+
+  if (nh.getParam("topics/output_utm_topic", output_utm_topic)) {
+    ROS_INFO("Loaded output_utm_topic: %s", output_utm_topic.c_str());
+  } else {
+    ROS_WARN("Failed to get output_utm_topic, using default: %s", output_utm_topic.c_str());
+  }
+
+  // GPS heading settings
+  min_gps_distance_for_heading_ = 0.0;  // default value
+  if (nh.getParam("gps_heading/min_distance_for_heading", min_gps_distance_for_heading_)) {
+    ROS_INFO("Loaded min_distance_for_heading: %f", min_gps_distance_for_heading_);
+  } else {
+    ROS_WARN("Failed to get min_distance_for_heading, using default: %f", min_gps_distance_for_heading_);
+  }
+
+  min_speed_for_heading_ = 0.6;  // default value
+  if (nh.getParam("gps_heading/min_speed_for_heading", min_speed_for_heading_)) {
+    ROS_INFO("Loaded min_speed_for_heading: %f", min_speed_for_heading_);
+  } else {
+    ROS_WARN("Failed to get min_speed_for_heading, using default: %f", min_speed_for_heading_);
+  }
+
+  // EKF process noise settings
+  double process_noise_x = 0.05;  // default value
+  double process_noise_y = 0.05;  // default value
+  double process_noise_yaw = 0.001;  // default value
+
+  if (nh.getParam("process_noise/x", process_noise_x)) {
     ROS_INFO("Loaded process_noise/x: %f", process_noise_x);
+  } else {
+    ROS_WARN("Failed to get process_noise/x, using default: %f", process_noise_x);
   }
-  if (nh.getParam("/process_noise/y", process_noise_y)) {
+
+  if (nh.getParam("process_noise/y", process_noise_y)) {
     ROS_INFO("Loaded process_noise/y: %f", process_noise_y);
+  } else {
+    ROS_WARN("Failed to get process_noise/y, using default: %f", process_noise_y);
   }
-  if (nh.getParam("/process_noise/yaw", process_noise_yaw)) {
+
+  if (nh.getParam("process_noise/yaw", process_noise_yaw)) {
     ROS_INFO("Loaded process_noise/yaw: %f", process_noise_yaw);
+  } else {
+    ROS_WARN("Failed to get process_noise/yaw, using default: %f", process_noise_yaw);
   }
 
-  // EKF 측정 노이즈 (R 행렬)
-  double meas_noise_pos_x = 0.1;
-  double meas_noise_pos_y = 0.1;
-  double meas_noise_heading = 0.7;
-  
-  if (nh.getParam("/measurement_noise/position/x", meas_noise_pos_x)) {
+  // EKF measurement noise settings
+  double meas_noise_pos_x = 0.1;  // default value
+  double meas_noise_pos_y = 0.1;  // default value
+  double meas_noise_heading = 0.7;  // default value
+
+  if (nh.getParam("measurement_noise/position/x", meas_noise_pos_x)) {
     ROS_INFO("Loaded measurement_noise/position/x: %f", meas_noise_pos_x);
+  } else {
+    ROS_WARN("Failed to get measurement_noise/position/x, using default: %f", meas_noise_pos_x);
   }
-  if (nh.getParam("/measurement_noise/position/y", meas_noise_pos_y)) {
+
+  if (nh.getParam("measurement_noise/position/y", meas_noise_pos_y)) {
     ROS_INFO("Loaded measurement_noise/position/y: %f", meas_noise_pos_y);
+  } else {
+    ROS_WARN("Failed to get measurement_noise/position/y, using default: %f", meas_noise_pos_y);
   }
-  if (nh.getParam("/measurement_noise/heading", meas_noise_heading)) {
+
+  if (nh.getParam("measurement_noise/heading", meas_noise_heading)) {
     ROS_INFO("Loaded measurement_noise/heading: %f", meas_noise_heading);
+  } else {
+    ROS_WARN("Failed to get measurement_noise/heading, using default: %f", meas_noise_heading);
   }
 
-  // 초기 EKF 설정
-  double initial_pos_uncertainty = 1.0;
-  double initial_heading_uncertainty = 1.0;
-  
-  if (nh.getParam("/ekf_initial/position_uncertainty", initial_pos_uncertainty)) {
+  // Initial EKF settings
+  double initial_pos_uncertainty = 1.0;  // default value
+  double initial_heading_uncertainty = 1.0;  // default value
+
+  if (nh.getParam("ekf_initial/position_uncertainty", initial_pos_uncertainty)) {
     ROS_INFO("Loaded ekf_initial/position_uncertainty: %f", initial_pos_uncertainty);
+  } else {
+    ROS_WARN("Failed to get ekf_initial/position_uncertainty, using default: %f", initial_pos_uncertainty);
   }
-  if (nh.getParam("/ekf_initial/heading_uncertainty", initial_heading_uncertainty)) {
+
+  if (nh.getParam("ekf_initial/heading_uncertainty", initial_heading_uncertainty)) {
     ROS_INFO("Loaded ekf_initial/heading_uncertainty: %f", initial_heading_uncertainty);
+  } else {
+    ROS_WARN("Failed to get ekf_initial/heading_uncertainty, using default: %f", initial_heading_uncertainty);
   }
 
-  // print settings
-  ROS_INFO_STREAM("=== Topic Settings ===");
-  ROS_INFO_STREAM("GPS Fix Topic: " << gps_fix_topic);
-  ROS_INFO_STREAM("IMU Topic: " << imu_topic);
-  ROS_INFO_STREAM("Velocity Topic: " << velocity_topic);
-  ROS_INFO_STREAM("Output Odometry Topic: " << output_odom_topic);
-  ROS_INFO_STREAM("Output UTM Position Topic: " << output_utm_topic);
-  
-  ROS_INFO_STREAM("=== GPS Heading Settings ===");
-  ROS_INFO_STREAM("Minimum Distance for Heading Calculation: " << min_gps_distance_for_heading_ << " m");
-  ROS_INFO_STREAM("Minimum Speed for Heading Calculation: " << min_speed_for_heading_ << " m/s");
-  
-  ROS_INFO_STREAM("=== EKF Noise Settings ===");
-  ROS_INFO_STREAM("Process Noise - X: " << process_noise_x << ", Y: " << process_noise_y << ", Yaw: " << process_noise_yaw);
-  ROS_INFO_STREAM("Measurement Noise - Position X: " << meas_noise_pos_x << ", Position Y: " << meas_noise_pos_y << ", Heading: " << meas_noise_heading);
-  
-  ROS_INFO_STREAM("=== Initial EKF Settings ===");
-  ROS_INFO_STREAM("Initial Position Uncertainty: " << initial_pos_uncertainty);
-  ROS_INFO_STREAM("Initial Heading Uncertainty: " << initial_heading_uncertainty);
-
+  // Publishers and Subscribers setup
   current_utm_position_pub_ = nh_.advertise<geometry_msgs::Point>(output_utm_topic, 10);
   odom_pub_ekf_ = nh_.advertise<nav_msgs::Odometry>(output_odom_topic, 50);
-
 
   gps_fix_sub_ = nh_.subscribe(gps_fix_topic, 10, &IMUGPSToOdometry::gpsFixCallback, this);
   imu_sub_ = nh_.subscribe(imu_topic, 50, &IMUGPSToOdometry::imuCallback, this);
   velocity_sub_ = nh_.subscribe(velocity_topic, 10, &IMUGPSToOdometry::velocityCallback, this);
 
-
+  // Initialize EKF matrices
   Q_ = Eigen::Matrix3d::Zero();
   Q_(0,0) = process_noise_x;
   Q_(1,1) = process_noise_y;
@@ -141,7 +168,7 @@ void IMUGPSToOdometry::spin()
   ros::spin();
 }
 
-// callback 함수들
+// Callback functions
 
 void IMUGPSToOdometry::gpsFixCallback(const sensor_msgs::NavSatFix::ConstPtr& msg)
 {
@@ -153,7 +180,7 @@ void IMUGPSToOdometry::gpsFixCallback(const sensor_msgs::NavSatFix::ConstPtr& ms
 
   if (init_position_flag_) {
     ROS_INFO("Initializing position with first GPS fix...");
-    ros::Duration(1.0).sleep(); // 1초 대기
+    ros::Duration(1.0).sleep(); // Wait for 1 second
     init_position_utm_.x = easting;
     init_position_utm_.y = northing;
     init_position_utm_.z = 0.0;
@@ -173,7 +200,7 @@ void IMUGPSToOdometry::gpsFixCallback(const sensor_msgs::NavSatFix::ConstPtr& ms
 
   gps_utm_history_.push_back(std::make_pair(easting, northing));
   
-  // 히스토리 크기 제한 (최대 20개 포인트 유지)
+  // Limit history size (maximum 20 points)
   if (gps_utm_history_.size() > 20) {
     gps_utm_history_.pop_front();
   }
@@ -213,12 +240,12 @@ void IMUGPSToOdometry::imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
         ROS_INFO("EKF heading initialized with GPS measurement.");
       }
       
-      // 여기에서도 파라미터를 직접 로드
+      // Load parameters directly here
       double pos_uncertainty = 1.0;
       double heading_uncertainty = 1.0;
       
       ros::NodeHandle nh;
-      // 전역 네임스페이스에서 읽기
+      // Read from global namespace
       nh.getParam("/ekf_initial/position_uncertainty", pos_uncertainty);
       nh.getParam("/ekf_initial/heading_uncertainty", heading_uncertainty);
       
@@ -364,8 +391,8 @@ bool IMUGPSToOdometry::calculateGPSHeading(double &heading_rad)
   for (int i = gps_utm_history_.size() - 2; i >= 0; i--) {
     const auto& older = gps_utm_history_[i];
     
-    double dx = newest.first - older.first;   // 동서 방향 (easting)
-    double dy = newest.second - older.second; // 남북 방향 (northing)
+    double dx = newest.first - older.first;   // East-West direction (easting)
+    double dy = newest.second - older.second; // North-South direction (northing)
     double distance = std::sqrt(dx*dx + dy*dy);
     
     // find previous gps point with enough distance

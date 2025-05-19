@@ -20,6 +20,6 @@ if __name__ == '__main__':
     rospy.init_node('odom_to_base_link_broadcaster')
     br = tf2_ros.TransformBroadcaster()
 
-    output_odom_topic = rospy.get_param('/topics/output_odom_topic', '/odom/ekf_single')
+    output_odom_topic = rospy.get_param('/localization/topics/output_odom_topic', '/odom/ekf')
     rospy.Subscriber(output_odom_topic, Odometry, handle_odom_pose, br)
     rospy.spin() 
