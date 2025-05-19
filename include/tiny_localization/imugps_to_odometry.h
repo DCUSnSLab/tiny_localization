@@ -26,6 +26,9 @@ protected:
   void gpsFixCallback(const sensor_msgs::NavSatFix::ConstPtr& msg);
   void velocityCallback(const std_msgs::Float64::ConstPtr& msg);
   void imuCallback(const sensor_msgs::Imu::ConstPtr& msg);
+  
+  // Add data check method
+  void checkDataTimeouts();
 
   double normalizeAngle(double angle);
   double angleDiff(double a, double b);
@@ -38,6 +41,19 @@ protected:
   ros::Subscriber gps_fix_sub_;
   ros::Subscriber imu_sub_;
   ros::Subscriber velocity_sub_;
+  
+  // Add timer for checking data timeouts
+  ros::Timer timeout_check_timer_;
+  
+  // Add last message received times
+  ros::Time last_gps_received_time_;
+  ros::Time last_imu_received_time_;
+  ros::Time last_velocity_received_time_;
+  
+  // Add timeout thresholds (in seconds)
+  double gps_timeout_threshold_;
+  double imu_timeout_threshold_;
+  double velocity_timeout_threshold_;
 
   ros::Publisher current_utm_position_pub_;
   ros::Publisher odom_pub_ekf_;

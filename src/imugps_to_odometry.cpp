@@ -17,7 +17,11 @@ IMUGPSToOdometry::IMUGPSToOdometry() :
   new_gps_position_(false),
   new_gps_heading_(false),
   current_speed_(0.0),
-  min_gps_distance_for_heading_(0.0)
+  min_gps_distance_for_heading_(0.0),
+  // Initialize timeout related variables
+  gps_timeout_threshold_(1.0),
+  imu_timeout_threshold_(0.5),
+  velocity_timeout_threshold_(1.0)
 {
   ros::NodeHandle private_nh("~");
   ros::NodeHandle nh;
@@ -157,6 +161,10 @@ IMUGPSToOdometry::IMUGPSToOdometry() :
   R_heading_ = meas_noise_heading;
 
   ROS_INFO("IMUGPSToOdometry node (with EKF for position & heading) initialized.");
+
+  // Setup timeout check timer (every 1 second)
+  timeout_check_timer_ = nh_.createTimer(ros::Duration(1.0), 
+                          [this](const ros::TimerEvent&) { this->checkDataTimeouts(); });
 }
 
 IMUGPSToOdometry::~IMUGPSToOdometry()
@@ -172,6 +180,9 @@ void IMUGPSToOdometry::spin()
 
 void IMUGPSToOdometry::gpsFixCallback(const sensor_msgs::NavSatFix::ConstPtr& msg)
 {
+  // Update the last received time
+  last_gps_received_time_ = ros::Time::now();
+  
   gps_fix_msg_ = *msg;
   gps_fix_received_ = true;
 
@@ -219,11 +230,17 @@ void IMUGPSToOdometry::gpsFixCallback(const sensor_msgs::NavSatFix::ConstPtr& ms
 
 void IMUGPSToOdometry::velocityCallback(const std_msgs::Float64::ConstPtr& msg)
 {
+  // Update the last received time
+  last_velocity_received_time_ = ros::Time::now();
+  
   current_speed_ = msg->data;
 }
 
 void IMUGPSToOdometry::imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
 {
+  // Update the last received time
+  last_imu_received_time_ = ros::Time::now();
+  
   imu_msg_ = *msg;
   double current_time = msg->header.stamp.toSec();
 
@@ -451,6 +468,42 @@ void IMUGPSToOdometry::convertLatLonToUTM(double lat, double lon, double &eastin
   int zone;
   bool northp;
   GeographicLib::UTMUPS::Forward(lat, lon, zone, northp, easting, northing);
+}
+
+// Add new method to check for data timeouts
+void IMUGPSToOdometry::checkDataTimeouts()
+{
+  ros::Time current_time = ros::Time::now();
+  
+  // Check GPS data
+  if (!last_gps_received_time_.isZero()) {
+    double time_since_last_gps = (current_time - last_gps_received_time_).toSec();
+    if (time_since_last_gps > gps_timeout_threshold_) {
+      ROS_WARN("No GPS data received for %.1f seconds!", time_since_last_gps);
+    }
+  } else {
+    ROS_WARN("No GPS data has been received yet!");
+  }
+  
+  // Check IMU data
+  if (!last_imu_received_time_.isZero()) {
+    double time_since_last_imu = (current_time - last_imu_received_time_).toSec();
+    if (time_since_last_imu > imu_timeout_threshold_) {
+      ROS_WARN("No IMU data received for %.1f seconds!", time_since_last_imu);
+    }
+  } else {
+    ROS_WARN("No IMU data has been received yet!");
+  }
+  
+  // Check velocity data
+  if (!last_velocity_received_time_.isZero()) {
+    double time_since_last_velocity = (current_time - last_velocity_received_time_).toSec();
+    if (time_since_last_velocity > velocity_timeout_threshold_) {
+      ROS_WARN("No velocity data received for %.1f seconds!", time_since_last_velocity);
+    }
+  } else {
+    ROS_WARN("No velocity data has been received yet!");
+  }
 }
 
 }
