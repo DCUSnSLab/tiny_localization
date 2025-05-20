@@ -180,11 +180,14 @@ void IMUGPSToOdometry::spin()
 
 void IMUGPSToOdometry::gpsFixCallback(const sensor_msgs::NavSatFix::ConstPtr& msg)
 {
-  // Update the last received time
+
   last_gps_received_time_ = ros::Time::now();
+  gps_not_recv_count_ = 0;
+  gps_fix_received_ = true;
+  new_gps_position_ = true;
   
   gps_fix_msg_ = *msg;
-  gps_fix_received_ = true;
+
 
   double easting, northing;
   convertLatLonToUTM(msg->latitude, msg->longitude, easting, northing);
@@ -230,21 +233,19 @@ void IMUGPSToOdometry::gpsFixCallback(const sensor_msgs::NavSatFix::ConstPtr& ms
 
 void IMUGPSToOdometry::velocityCallback(const std_msgs::Float64::ConstPtr& msg)
 {
-  // Update the last received time
   last_velocity_received_time_ = ros::Time::now();
-  
+  vel_not_recv_count_ = 0;
   current_speed_ = msg->data;
 }
 
 void IMUGPSToOdometry::imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
 {
-  // Update the last received time
   last_imu_received_time_ = ros::Time::now();
-  
+  imu_not_recv_count_ = 0;
   imu_msg_ = *msg;
   double current_time = msg->header.stamp.toSec();
 
-  if (init_position_flag_ || !gps_fix_received_) {
+  if (init_position_flag_ || !gps_fix_received_ || !all_data_callback_received_) {
     return;
   }
 
@@ -370,7 +371,7 @@ void IMUGPSToOdometry::imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
 
   double yaw_ekf = ekf_state_(2);
   tf::Quaternion q_tf;
-  q_tf.setRPY(0, 0, yaw_ekf);  // roll=0, pitch=0, yaw(east based)
+  q_tf.setRPY(0, 0, yaw_ekf);
   geometry_msgs::Quaternion q_msg;
   tf::quaternionTFToMsg(q_tf, q_msg);
   ekf_odom.pose.pose.orientation = q_msg;
@@ -380,9 +381,9 @@ void IMUGPSToOdometry::imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
   ekf_odom.twist.twist.angular.z = msg->angular_velocity.z;
 
 
-  ekf_odom.pose.covariance[0] = ekf_P_(0,0);   // x
-  ekf_odom.pose.covariance[7] = ekf_P_(1,1);   // y
-  ekf_odom.pose.covariance[35] = ekf_P_(2,2);  // yaw
+  ekf_odom.pose.covariance[0] = ekf_P_(0,0);
+  ekf_odom.pose.covariance[7] = ekf_P_(1,1);
+  ekf_odom.pose.covariance[35] = ekf_P_(2,2);
 
   odom_pub_ekf_.publish(ekf_odom);
 
@@ -470,40 +471,32 @@ void IMUGPSToOdometry::convertLatLonToUTM(double lat, double lon, double &eastin
   GeographicLib::UTMUPS::Forward(lat, lon, zone, northp, easting, northing);
 }
 
-// Add new method to check for data timeouts
 void IMUGPSToOdometry::checkDataTimeouts()
 {
-  ros::Time current_time = ros::Time::now();
-  
-  // Check GPS data
-  if (!last_gps_received_time_.isZero()) {
-    double time_since_last_gps = (current_time - last_gps_received_time_).toSec();
-    if (time_since_last_gps > gps_timeout_threshold_) {
-      ROS_WARN("No GPS data received for %.1f seconds!", time_since_last_gps);
+  gps_not_recv_count_++;
+  imu_not_recv_count_++;
+  vel_not_recv_count_++;
+  if (vel_not_recv_count_ <= timeout_count_th_ && gps_not_recv_count_ <= timeout_count_th_ && imu_not_recv_count_ <= timeout_count_th_) {
+    if (!all_data_callback_received_flag_) {
+      ROS_INFO("All data callback received!");
+      all_data_callback_received_flag_ = true;
+      all_data_callback_received_ = true;
     }
-  } else {
-    ROS_WARN("No GPS data has been received yet!");
+    return;
   }
-  
-  // Check IMU data
-  if (!last_imu_received_time_.isZero()) {
-    double time_since_last_imu = (current_time - last_imu_received_time_).toSec();
-    if (time_since_last_imu > imu_timeout_threshold_) {
-      ROS_WARN("No IMU data received for %.1f seconds!", time_since_last_imu);
-    }
-  } else {
-    ROS_WARN("No IMU data has been received yet!");
+
+  if (gps_not_recv_count_ > timeout_count_th_) {
+    ROS_WARN_THROTTLE(1.0, "No GPS data callback for %d seconds!", gps_not_recv_count_);
   }
-  
-  // Check velocity data
-  if (!last_velocity_received_time_.isZero()) {
-    double time_since_last_velocity = (current_time - last_velocity_received_time_).toSec();
-    if (time_since_last_velocity > velocity_timeout_threshold_) {
-      ROS_WARN("No velocity data received for %.1f seconds!", time_since_last_velocity);
-    }
-  } else {
-    ROS_WARN("No velocity data has been received yet!");
+  if (imu_not_recv_count_ > timeout_count_th_) {
+    ROS_WARN_THROTTLE(1.0, "No IMU data callback for %d seconds!", imu_not_recv_count_);
   }
+  if (vel_not_recv_count_ > timeout_count_th_) {
+    ROS_WARN_THROTTLE(1.0, "No Velocity data callback for %d seconds!", vel_not_recv_count_);
+  }
+  all_data_callback_received_flag_ = false;
+  all_data_callback_received_ = false;
+
 }
 
 }

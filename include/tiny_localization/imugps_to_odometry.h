@@ -37,6 +37,14 @@ protected:
   void convertLatLonToUTM(double lat, double lon, double &easting, double &northing);
   bool calculateGPSHeading(double &heading_rad);
 
+  int gps_not_recv_count_{0};
+  int imu_not_recv_count_{0};
+  int vel_not_recv_count_{0};
+
+  bool all_data_callback_received_{false};
+  bool all_data_callback_received_flag_{false};
+  int timeout_count_th_{1};
+
   ros::NodeHandle nh_;
   ros::Subscriber gps_fix_sub_;
   ros::Subscriber imu_sub_;
