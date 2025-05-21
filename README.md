@@ -137,7 +137,7 @@ The localization system uses an East-North-Up (ENU) coordinate system:
 
 ## Algorithm Overview
 
-1. The system initializes with the first GPS position as the origin of the local coordinate system
+1. The system initializes with the first GPS position as the origin of the local coordinate system. The GPS coordinates are converted to UTM to create a metric-based local reference frame. (This UTM initial position is available from the ROS Parameter Server at '/init_position')
 2. EKF prediction is performed using the motion model based on vehicle speed and IMU angular velocity
 3. GPS position measurements update the position states
 4. GPS-derived heading is calculated from consecutive positions and updates the heading state
@@ -153,7 +153,3 @@ The localization system uses an East-North-Up (ENU) coordinate system:
 ## License
 
 This package is released under the MIT License. See LICENSE file for details.
-
-## Contributing
-
-Contributions to improve tiny_localization are welcome. Please feel free to submit pull requests or report issues. 
