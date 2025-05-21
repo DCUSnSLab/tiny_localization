@@ -1,4 +1,4 @@
-#include "tiny_localization/imugps_to_odometry.h"
+#include "imugps_to_odometry.h"
 #include <ros/ros.h>
 
 int main(int argc, char** argv)
