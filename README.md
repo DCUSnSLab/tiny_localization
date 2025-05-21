@@ -4,7 +4,9 @@ A lightweight Extended Kalman Filter (EKF) based localization package for autono
 
 ## Overview
 
-![Image](https://github.com/user-attachments/assets/efa71c82-fe60-4fd9-a0c5-c19b8350b13b)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/efa71c82-fe60-4fd9-a0c5-c19b8350b13b" alt="Image" />
+</p>
 
 
 Tiny Localization provides a simple yet effective solution for estimating a vehicle's global position and orientation using sensor fusion. The package uses an Extended Kalman Filter to combine:
