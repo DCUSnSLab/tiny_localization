@@ -4,13 +4,26 @@ A lightweight Extended Kalman Filter (EKF) based localization package for autono
 
 ## Overview
 
-Tiny Localization provides a simple yet effective solution for estimating a vehicle's position and orientation using sensor fusion. The package uses an Extended Kalman Filter to combine:
+![Image](https://github.com/user-attachments/assets/efa71c82-fe60-4fd9-a0c5-c19b8350b13b)
+
+
+Tiny Localization provides a simple yet effective solution for estimating a vehicle's global position and orientation using sensor fusion. The package uses an Extended Kalman Filter to combine:
 
 - GPS positions converted to local UTM coordinates
 - IMU angular velocity
 - Vehicle speed information
 
-The EKF algorithm predicts the vehicle's state based on a motion model and then corrects the prediction using GPS measurements. GPS heading is calculated from consecutive GPS positions rather than relying on a dedicated heading sensor.
+## Node Input/Output
+![Image](https://github.com/user-attachments/assets/ee42a863-6dbe-4176-a4e2-93d83fe56c27)
+
+
+## TF Tree
+![Image](https://github.com/user-attachments/assets/4e9884ff-ca17-4e29-aac5-58b5479558f2)
+
+
+## Architecture
+![Image](https://github.com/user-attachments/assets/98b04965-83ef-4cba-933e-73ad0bddd966)
+
 
 ## Features
 
@@ -22,23 +35,24 @@ The EKF algorithm predicts the vehicle's state based on a motion model and then 
 - Support for forward and reverse motion
 
 ## Dependencies
-
-- ROS (Robot Operating System)
 - GeographicLib (for UTM conversions)
 - Eigen3 (for matrix operations)
-- Standard ROS message types
+
+## Enviroment
+- Ubuntu 20.04
+- ROS Noetic
 
 ## Installation
 
 1. Clone this repository into your catkin workspace's `src` directory:
    ```bash
    cd ~/catkin_ws/src
-   git clone <repository_url>
+   git clone https://github.com/totwjfakd/tiny_localization.git
    ```
 
 2. Install dependencies:
    ```bash
-   sudo apt-get install ros-$ROS_DISTRO-geographic-msgs libgeographic-dev
+   sudo apt-get install ros-noetic-geographic-msgs libgeographic-dev
    ```
 
 3. Build the package:
@@ -54,7 +68,10 @@ The EKF algorithm predicts the vehicle's state based on a motion model and then 
    ```bash
    roslaunch tiny_localization tiny_localization.launch
    ```
-
+3. No TF publish Launch:
+   ```bash
+   roslaunch tiny_localization tiny_localization.launch tf_broadcast_enabled:=false
+   ```
 ## Configuration
 
 All parameters can be adjusted in the `cfg/config.yaml` file:
@@ -65,7 +82,7 @@ topics:
   gps_fix_topic: "/ublox_gps/fix"       # GPS fix topic from ublox receiver  (sensor_msgs/NavSatFix)
   imu_topic: "/vectornav/IMU"           # IMU topic from VectorNav sensor (sensor_msgs/Imu)
   velocity_topic: "/vehicle/velocity"    # Vehicle velocity topic (std_msgs/Float64)
-  output_odom_topic: "/odom/ekf_single"  # Output odometry topic (nav_msgs/Odometry)
+  output_odom_topic: "/odom/ekf"  # Output odometry topic (nav_msgs/Odometry)
   output_utm_topic: "/current_utm_relative_position"  # Output UTM position topic (geometry_msgs/Point)
 ```
 
@@ -108,7 +125,7 @@ ekf_initial:
 
 ## Published Topics
 
-- `/odom/ekf_single` (nav_msgs/Odometry): Estimated vehicle pose and twist
+- `/odom/ekf` (nav_msgs/Odometry): Estimated vehicle pose and twist
 - `/current_utm_relative_position` (geometry_msgs/Point): Current position in local UTM coordinates
 
 ## Coordinate System
