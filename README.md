@@ -1,6 +1,6 @@
 # Tiny Localization
 
-A lightweight ROS package for real-time vehicle localization using Extended Kalman Filter to fuse GPS, IMU and velocity data. Provides accurate position and heading estimation in UTM coordinates.
+A lightweight Extended Kalman Filter (EKF) based localization package for autonomous vehicles, fusing GPS and IMU data to estimate vehicle position and heading.
 
 ## Overview
 
@@ -9,11 +9,7 @@ A lightweight ROS package for real-time vehicle localization using Extended Kalm
 </p>
 
 
-Tiny Localization provides a simple yet effective solution for estimating a vehicle's global position and orientation using sensor fusion. The package uses an Extended Kalman Filter to combine:
-
-- GPS positions converted to local UTM coordinates
-- IMU angular velocity
-- Vehicle speed information
+Tiny Localization provides a simple yet effective solution for estimating a vehicle's global position and orientation using sensor fusion. 
 
 ## Node Input/Output
 ![Image](https://github.com/user-attachments/assets/ee42a863-6dbe-4176-a4e2-93d83fe56c27)
