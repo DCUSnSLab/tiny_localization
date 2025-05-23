@@ -8,12 +8,14 @@ A lightweight Extended Kalman Filter (EKF) based localization package for autono
   <img src="https://github.com/user-attachments/assets/efa71c82-fe60-4fd9-a0c5-c19b8350b13b" alt="Image" />
 </p>
 
-
 Tiny Localization provides a simple yet effective solution for estimating a vehicle's global position and orientation using sensor fusion. 
 
 ## Node Input/Output
 ![Image](https://github.com/user-attachments/assets/ee42a863-6dbe-4176-a4e2-93d83fe56c27)
 
+## Enviroment
+- Ubuntu 20.04
+- ROS Noetic
 
 ## TF Tree
 ![Image](https://github.com/user-attachments/assets/4e9884ff-ca17-4e29-aac5-58b5479558f2)
@@ -35,10 +37,6 @@ Tiny Localization provides a simple yet effective solution for estimating a vehi
 ## Dependencies
 - GeographicLib (for UTM conversions)
 - Eigen3 (for matrix operations)
-
-## Enviroment
-- Ubuntu 20.04
-- ROS Noetic
 
 ## Installation
 
