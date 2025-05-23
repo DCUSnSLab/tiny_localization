@@ -17,8 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   message_generation
   message_runtime
-  ublox_msgs
-  hunter_msgs
   rospy
 )
 

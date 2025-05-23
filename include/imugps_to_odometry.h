@@ -13,7 +13,7 @@
 #include <GeographicLib/UTMUPS.hpp>
 #include <deque>
 
-namespace my_odometry_package {
+namespace tiny_localization {
 
 class IMUGPSToOdometry
 {

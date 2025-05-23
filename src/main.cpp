@@ -4,7 +4,7 @@
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "odom_converter_ekf");
-  my_odometry_package::IMUGPSToOdometry node;
+  tiny_localization::IMUGPSToOdometry node;
   node.spin();
   return 0;
 }

@@ -6,7 +6,7 @@
 #include <Eigen/Dense>
 #include <cmath>
 
-namespace my_odometry_package {
+namespace tiny_localization {
 
 IMUGPSToOdometry::IMUGPSToOdometry() :
   gps_fix_received_(false),
