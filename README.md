@@ -44,7 +44,7 @@ Tiny Localization provides a simple yet effective solution for estimating a vehi
 1. Clone this repository into your catkin workspace's `src` directory:
    ```bash
    cd ~/catkin_ws/src
-   git clone https://github.com/totwjfakd/tiny_localization.git
+   git clone https://github.com/DCUSnSLab/tiny_localization.git
    ```
 
 2. Install dependencies:
