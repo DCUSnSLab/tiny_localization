@@ -5,7 +5,7 @@
 #include <GeographicLib/UTMUPS.hpp>
 #include <Eigen/Dense>
 #include <cmath>
-
+#include <XmlRpcValue.h>
 namespace tiny_localization {
 
 IMUGPSToOdometry::IMUGPSToOdometry() :
@@ -195,15 +195,18 @@ void IMUGPSToOdometry::gpsFixCallback(const sensor_msgs::NavSatFix::ConstPtr& ms
   if (init_position_flag_) {
     ROS_INFO("Initializing position with first GPS fix...");
     ros::Duration(1.0).sleep(); // Wait for 1 second
+
+    XmlRpc::XmlRpcValue init_pos;
+    init_pos["x"] = easting;
+    init_pos["y"] = northing;
+    init_pos["z"] = 0.0;
+    ros::param::set("/init_position", init_pos);
+
     init_position_utm_.x = easting;
     init_position_utm_.y = northing;
     init_position_utm_.z = 0.0;
-    std::ostringstream oss;
-    oss << "{x: " << easting << ", y: " << northing << "}";
-    ros::param::set("/init_position", oss.str());
     init_position_flag_ = false;
     ROS_INFO("Initial UTM position set.");
-    
 
     gps_utm_history_.clear();
     gps_utm_history_.push_back(std::make_pair(easting, northing));
