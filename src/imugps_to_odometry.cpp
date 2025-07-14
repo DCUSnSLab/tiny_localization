@@ -197,13 +197,17 @@ void IMUGPSToOdometry::gpsFixCallback(const sensor_msgs::NavSatFix::ConstPtr& ms
     ros::Duration(1.0).sleep(); // Wait for 1 second
 
     XmlRpc::XmlRpcValue init_pos;
-    init_pos["x"] = easting;
-    init_pos["y"] = northing;
+    //init_pos["x"] = easting;
+    //init_pos["y"] = northing;
+    init_pos["x"] = 249977.7966724629;
+    init_pos["y"] = 3688368.057448936;
     init_pos["z"] = 0.0;
     ros::param::set("/init_position", init_pos);
 
-    init_position_utm_.x = easting;
-    init_position_utm_.y = northing;
+    // init_position_utm_.x = easting;
+    // init_position_utm_.y = northing;
+    init_position_utm_.x = 249977.7966724629;
+    init_position_utm_.y = 3688368.057448936;
     init_position_utm_.z = 0.0;
     init_position_flag_ = false;
     ROS_INFO("Initial UTM position set.");
