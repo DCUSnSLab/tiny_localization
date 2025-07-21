@@ -1,10 +1,11 @@
-#include "imugps_to_odometry.h"
-#include <ros/ros.h>
+#include "tiny_localization/imugps_to_odometry.h"
+#include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "odom_converter_ekf");
-  tiny_localization::IMUGPSToOdometry node;
-  node.spin();
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<tiny_localization::IMUGPSToOdometry>();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
   return 0;
 }
