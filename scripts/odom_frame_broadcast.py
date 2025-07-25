@@ -13,7 +13,7 @@ class OdomFrameBroadcaster(Node):
         self.broadcaster = tf2_ros.TransformBroadcaster(self)
         
         # Declare parameter for output odom topic
-        self.declare_parameter('output_odom_topic', '/odom/ekf')
+        self.declare_parameter('output_odom_topic', '/odom')
         output_odom_topic = self.get_parameter('output_odom_topic').get_parameter_value().string_value
         
         # Create subscription to odometry topic
@@ -28,8 +28,8 @@ class OdomFrameBroadcaster(Node):
     
     def handle_odom_pose(self, msg):
         t = TransformStamped()
-        t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = "odom_utm"
+        t.header.stamp = msg.header.stamp
+        t.header.frame_id = "odom"
         t.child_frame_id = "base_link"
         t.transform.translation.x = msg.pose.pose.position.x
         t.transform.translation.y = msg.pose.pose.position.y
