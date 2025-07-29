@@ -2,10 +2,10 @@
   ros__parameters:
     # Topic Settings
     topics:
-      gps_fix_topic: "/ublox_gps/fix"       # GPS fix topic from ublox receiver (sensor_msgs/NavSatFix)
-      imu_topic: "/zed_node/imu/data"           # IMU topic from VectorNav sensor (sensor_msgs/Imu)
-      velocity_topic: "/vehicle/velocity"    # Vehicle velocity topic (std_msgs/Float64)
-      output_odom_topic: "/odom/ekf"  # Output odometry topic
+      gps_fix_topic: "/gps/fix"       # GPS fix topic from ublox receiver (sensor_msgs/NavSatFix)
+      imu_topic: "/imu/data"           # IMU topic from VectorNav sensor (sensor_msgs/Imu)
+      velocity_topic: "/hunter/velocity"    # Vehicle velocity topic (std_msgs/Float64)
+      output_odom_topic: "/odom"  # Output odometry topic
       output_utm_topic: "/current_utm_relative_position"  # Output UTM position topic
 
     # GPS Heading Calculation Settings

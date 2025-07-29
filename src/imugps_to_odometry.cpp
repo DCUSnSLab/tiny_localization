@@ -8,6 +8,7 @@
 #endif
 #include <eigen3/Eigen/Dense>
 #include <cmath>
+#include <chrono>
 
 namespace tiny_localization {
 
@@ -29,7 +30,7 @@ IMUGPSToOdometry::IMUGPSToOdometry() : Node("imugps_to_odometry"),
   std::string gps_fix_topic = "/ublox_gps/fix";
   std::string imu_topic = "/vectornav/IMU";
   std::string velocity_topic = "/vehicle/velocity";
-  std::string output_odom_topic = "/odom/ekf";
+  std::string output_odom_topic = "/odom";
   std::string output_utm_topic = "/current_utm_relative_position";
 
   // Declare parameters
@@ -173,7 +174,6 @@ void IMUGPSToOdometry::gpsFixCallback(const sensor_msgs::msg::NavSatFix::SharedP
     last_gps_time_ = this->now();
     return;
   }
-
   // Calculate relative position
   double rel_x = easting - init_position_utm_.x;
   double rel_y = northing - init_position_utm_.y;
@@ -221,8 +221,9 @@ void IMUGPSToOdometry::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
 
   imu_msg_ = *msg;
   
-  double current_time = this->now().seconds();
-  
+  auto now = std::chrono::system_clock::now();
+  double current_time = std::chrono::duration_cast<std::chrono::duration<double>>(now.time_since_epoch()).count();
+
   if (last_time_ == 0.0) {
     last_time_ = current_time;
     return;
@@ -230,12 +231,11 @@ void IMUGPSToOdometry::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
 
   double dt = current_time - last_time_;
   last_time_ = current_time;
-
   if (dt <= 0.0 || dt > 1.0) {
-    RCLCPP_WARN(this->get_logger(), "Invalid dt: %f", dt);
+    RCLCPP_WARN(this->get_logger(), "current_time: %f", current_time);
     return;
   }
-
+  
   // Initialize EKF if not already done
   if (!ekf_initialized_) {
     if (new_gps_heading_) {
@@ -295,7 +295,6 @@ void IMUGPSToOdometry::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
 
     new_gps_position_ = false;
   }
-
   // GPS heading update
   if (new_gps_heading_) {
     double z_heading = gps_heading_meas_;
@@ -322,7 +321,7 @@ void IMUGPSToOdometry::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
   // Publish odometry
   nav_msgs::msg::Odometry odom_msg;
   odom_msg.header.stamp = this->now();
-  odom_msg.header.frame_id = "odom_utm";
+  odom_msg.header.frame_id = "odom";
   odom_msg.child_frame_id = "base_link";
 
   odom_msg.pose.pose.position.x = ekf_state_(0);
@@ -430,7 +429,6 @@ geometry_msgs::msg::Quaternion IMUGPSToOdometry::northQuaternionToEastQuaternion
 void IMUGPSToOdometry::checkDataTimeouts()
 {
   auto current_time = this->now();
-  
   if ((current_time - last_gps_received_time_).seconds() > gps_timeout_threshold_) {
     gps_not_recv_count_++;
     if (gps_not_recv_count_ >= timeout_count_th_) {

@@ -38,7 +38,7 @@ def generate_launch_description():
     
     tf_broadcast_enabled_arg = DeclareLaunchArgument(
         'tf_broadcast_enabled',
-        default_value='false',
+        default_value='true',
         description='TF broadcast enable flag'
     )
     
@@ -48,7 +48,7 @@ def generate_launch_description():
         executable='tiny_localization_node',
         name=LaunchConfiguration('node_name'),
         namespace=LaunchConfiguration('node_namespace'),
-        parameters=[LaunchConfiguration('config_file')],
+        parameters=[LaunchConfiguration('config_file'), {'use_sim_time': True}],
         output='screen'
     )
     

@@ -14,8 +14,8 @@ class GPSFrameBroadcaster(Node):
         # Create static transform
         static_transform = TransformStamped()
         static_transform.header.stamp = self.get_clock().now().to_msg()
-        static_transform.header.frame_id = "gps_utm"
-        static_transform.child_frame_id = "odom_utm"
+        static_transform.header.frame_id = "map"
+        static_transform.child_frame_id = "odom"
         
         static_transform.transform.translation.x = 0.0
         static_transform.transform.translation.y = 0.0
