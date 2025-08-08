@@ -63,6 +63,11 @@ IMUGPSToOdometry::IMUGPSToOdometry() : Node("imugps_to_odometry"),
   this->declare_parameter("ekf_initial.position_uncertainty", 1.0);
   this->declare_parameter("ekf_initial.heading_uncertainty", 1.0);
 
+  // Map origin parameters (will be set when GPS is received)
+  this->declare_parameter("map_origin.utm_easting", 0.0);
+  this->declare_parameter("map_origin.utm_northing", 0.0);
+  this->declare_parameter("map_origin.utm_zone", 52);
+
   // Get parameters
   gps_fix_topic = this->get_parameter("topics.gps_fix_topic").as_string();
   imu_topic = this->get_parameter("topics.imu_topic").as_string();
@@ -154,7 +159,7 @@ void IMUGPSToOdometry::gpsFixCallback(const sensor_msgs::msg::NavSatFix::SharedP
     RCLCPP_INFO(this->get_logger(), "Initializing position with first GPS fix...");
     rclcpp::sleep_for(std::chrono::seconds(1)); // Wait for 1 second
 
-    // Set initial position parameter using actual GPS coordinates
+    // Set initial position parameter using actual GPS coordinates - this becomes the map origin
     this->set_parameter(rclcpp::Parameter("init_position.x", easting));
     this->set_parameter(rclcpp::Parameter("init_position.y", northing));
     this->set_parameter(rclcpp::Parameter("init_position.z", 0.0));
@@ -164,10 +169,19 @@ void IMUGPSToOdometry::gpsFixCallback(const sensor_msgs::msg::NavSatFix::SharedP
     init_position_utm_.z = 0.0;
     init_position_flag_ = false;
     
+    // Start EKF at origin (0,0) in odom frame
     ekf_state_(0) = 0.0;
     ekf_state_(1) = 0.0;
     
-    RCLCPP_INFO(this->get_logger(), "Initial UTM position set: (%.2f, %.2f)", easting, northing);
+    RCLCPP_INFO(this->get_logger(), "Map origin set to UTM: (%.2f, %.2f)", easting, northing);
+    RCLCPP_INFO(this->get_logger(), "Odometry initialized at origin (0, 0)");
+    
+    // Set map origin as parameters for other modules to use
+    this->set_parameter(rclcpp::Parameter("map_origin.utm_easting", easting));
+    this->set_parameter(rclcpp::Parameter("map_origin.utm_northing", northing));
+    this->set_parameter(rclcpp::Parameter("map_origin.utm_zone", 52));  // Korea UTM zone
+    
+    RCLCPP_INFO(this->get_logger(), "Map origin parameters set - other modules can access via /tiny_localization_node/map_origin.*");
     
     gps_utm_history_.clear();
     gps_utm_history_.push_back(std::make_pair(easting, northing));
