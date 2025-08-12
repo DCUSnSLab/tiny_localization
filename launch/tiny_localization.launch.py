@@ -10,10 +10,18 @@ from ament_index_python.packages import get_package_share_directory
 import os
 
 def generate_launch_description():
+    use_sim_time = LaunchConfiguration('use_sim_time', default='true') # 시뮬레이션 환경인 경우 true, 밖이면 false
+
     # Package directory
     pkg_dir = get_package_share_directory('tiny_localization')
     
     # Launch arguments
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='true',
+        description='Param for use_sim_time'
+    )
+    
     node_name_arg = DeclareLaunchArgument(
         'node_name',
         default_value='tiny_localization_node',
@@ -42,13 +50,19 @@ def generate_launch_description():
         description='TF broadcast enable flag'
     )
     
+    map_file_path_arg = DeclareLaunchArgument(
+        'map_file_path',
+        default_value='/home/ros2/ros2_ws/src/command_center/GraphMap_Server/maps/3x3_map.json',
+        description='Path to map JSON file for map frame broadcast'
+    )
+    
     # Main localization node
     localization_node = Node(
         package='tiny_localization',
         executable='tiny_localization_node',
         name=LaunchConfiguration('node_name'),
         namespace=LaunchConfiguration('node_namespace'),
-        parameters=[LaunchConfiguration('config_file'), {'use_sim_time': True}],
+        parameters=[LaunchConfiguration('config_file'), {'use_sim_time': use_sim_time}],
         output='screen'
     )
     
@@ -61,7 +75,8 @@ def generate_launch_description():
                 package='tiny_localization',
                 executable='odom_frame_broadcast.py',
                 name='odom_frame_broadcaster',
-                output='screen'
+                output='screen',
+                parameters=[{'use_sim_time': use_sim_time}]
             ),
             
             # gps_utm -> odom_utm TF broadcast
@@ -69,16 +84,19 @@ def generate_launch_description():
                 package='tiny_localization',
                 executable='gps_frame_broadcast.py',
                 name='gps_frame_broadcaster',
-                output='screen'
+                output='screen',
+                parameters=[{'use_sim_time': use_sim_time}]
             )
         ]
     )
     
     return LaunchDescription([
+        use_sim_time_arg,
         node_name_arg,
         node_namespace_arg,
         config_file_arg,
         tf_broadcast_enabled_arg,
+        map_file_path_arg,
         localization_node,
         tf_broadcast_group
     ])
