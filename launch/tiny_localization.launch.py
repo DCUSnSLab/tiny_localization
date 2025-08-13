@@ -12,6 +12,12 @@ import os
 def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='true') # 시뮬레이션 환경인 경우 true, 밖이면 false
 
+    map_file = PathJoinSubstitution([
+                    FindPackageShare('gmserver'),
+                    'maps',
+                    'zzzzz.json'
+                ])
+
     # Package directory
     pkg_dir = get_package_share_directory('tiny_localization')
     
@@ -52,7 +58,7 @@ def generate_launch_description():
     
     map_file_path_arg = DeclareLaunchArgument(
         'map_file_path',
-        default_value='/home/ros2/ros2_ws/src/command_center/GraphMap_Server/maps/3x3_map.json',
+        default_value=map_file,
         description='Path to map JSON file for map frame broadcast'
     )
     
@@ -85,7 +91,10 @@ def generate_launch_description():
                 executable='gps_frame_broadcast.py',
                 name='gps_frame_broadcaster',
                 output='screen',
-                parameters=[{'use_sim_time': use_sim_time}]
+                parameters=[{
+                    'map_file_path': LaunchConfiguration('map_file_path'),
+                    'use_sim_time': use_sim_time
+                }]
             )
         ]
     )

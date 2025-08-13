@@ -17,7 +17,7 @@ class GPSFrameBroadcaster(Node):
         self.broadcaster = tf2_ros.StaticTransformBroadcaster(self)
         self.map_origin_set = False
         
-        self.declare_parameter('map_file_path', '/home/ros2/ros2_ws/src/command_center/GraphMap_Server/maps/3x3_map.json')
+        self.declare_parameter('map_file_path')
         self.map_file_path = self.get_parameter('map_file_path').get_parameter_value().string_value
         
         # Localization node name
@@ -131,8 +131,8 @@ class GPSFrameBroadcaster(Node):
         # Odom frame starts at the same location, so no translation needed
         # 아래 UTM 좌표 연산에서 (Map의 원점 좌표 - GPS 초기 좌표) 연산을 수행해야 함
         # utm_easting은 정확히는 GPS의 초기 좌표에 해당
-        static_transform.transform.translation.x = utm_easting - self.map_utm_easting
-        static_transform.transform.translation.y = utm_northing - self.map_utm_northing
+        static_transform.transform.translation.x = self.map_utm_easting - utm_easting
+        static_transform.transform.translation.y = self.map_utm_northing - utm_northing
         static_transform.transform.translation.z = 0.0
         
         static_transform.transform.rotation.x = 0.0
