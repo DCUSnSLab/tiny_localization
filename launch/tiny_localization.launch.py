@@ -76,7 +76,7 @@ def generate_launch_description():
     tf_broadcast_group = GroupAction(
         condition=IfCondition(LaunchConfiguration('tf_broadcast_enabled')),
         actions=[
-            # odom_utm -> base_link TF broadcast
+            # odom -> base_link TF broadcast
             Node(
                 package='tiny_localization',
                 executable='odom_frame_broadcast.py',
@@ -85,17 +85,17 @@ def generate_launch_description():
                 parameters=[{'use_sim_time': use_sim_time}]
             ),
             
-            # gps_utm -> odom_utm TF broadcast
-            Node(
-                package='tiny_localization',
-                executable='gps_frame_broadcast.py',
-                name='gps_frame_broadcaster',
-                output='screen',
-                parameters=[{
-                    'map_file_path': LaunchConfiguration('map_file_path'),
-                    'use_sim_time': use_sim_time
-                }]
-            )
+            # map -> odom TF broadcast
+            # Node(
+            #     package='tiny_localization',
+            #     executable='gps_frame_broadcast.py',
+            #     name='gps_frame_broadcaster',
+            #     output='screen',
+            #     parameters=[{
+            #         'map_file_path': LaunchConfiguration('map_file_path'),
+            #         'use_sim_time': use_sim_time
+            #     }]
+            # )
         ]
     )
     
