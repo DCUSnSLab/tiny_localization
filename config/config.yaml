@@ -4,7 +4,7 @@
         topics:
             gps_fix_topic: "/ublox_gps_node/fix" # GPS fix topic from ublox receiver (sensor_msgs/NavSatFix)
             imu_topic: "/zed/zed_node/imu/data" # IMU topic from VectorNav sensor (sensor_msgs/Imu)
-            velocity_topic: "/arduino_raw/speed" # Vehicle velocity topic (std_msgs/Float64)
+            velocity_topic: "/arduino_raw/speed_ms" # Vehicle velocity topic (std_msgs/Float64)
             output_odom_topic: "/odom" # Output odometry topic
             output_utm_topic: "/current_utm_relative_position" # Output UTM position topic
 
