@@ -354,8 +354,7 @@ void IMUGPSToOdometry::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
   odom_msg.pose.covariance[7] = ekf_P_(1, 1);   // y
   odom_msg.pose.covariance[35] = ekf_P_(2, 2);  // yaw
 
-  odom_msg.twist.twist.linear.x = current_speed_ * cos(ekf_state_(2));
-  odom_msg.twist.twist.linear.y = current_speed_ * sin(ekf_state_(2));
+  odom_msg.twist.twist.linear.x = current_speed_;
   odom_msg.twist.twist.angular.z = omega_z;
 
   odom_pub_ekf_->publish(odom_msg);
