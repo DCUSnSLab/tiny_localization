@@ -10,7 +10,7 @@ from ament_index_python.packages import get_package_share_directory
 import os
 
 def generate_launch_description():
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true') # 시뮬레이션 환경인 경우 true, 밖이면 false
+    use_sim_time = LaunchConfiguration('use_sim_time', default='false') # 시뮬레이션 환경인 경우 true, 밖이면 false
 
     map_file = PathJoinSubstitution([
                     FindPackageShare('gmserver'),
