@@ -252,29 +252,49 @@ void IMUGPSToOdometry::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
   
   // Initialize EKF if not already done
   if (!ekf_initialized_) {
+    // Try GPS heading first (more accurate when vehicle is moving)
     if (new_gps_heading_) {
       ekf_state_(2) = gps_heading_meas_;
       ekf_initialized_ = true;
-      RCLCPP_INFO(this->get_logger(), "EKF initialized with heading: %.3f rad", gps_heading_meas_);
-    } else {
-      return;
+      RCLCPP_INFO(this->get_logger(), "EKF initialized with GPS heading: %.3f rad", gps_heading_meas_);
+    }
+    // Fallback to IMU orientation (works even when vehicle is stationary)
+    else {
+      tf2::Quaternion q;
+      tf2::fromMsg(msg->orientation, q);
+      double roll, pitch, yaw;
+      tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+      ekf_state_(2) = yaw;
+      ekf_initialized_ = true;
+      RCLCPP_INFO(this->get_logger(), "EKF initialized with IMU heading: %.3f rad", yaw);
     }
   }
 
   // EKF Prediction Step
   double omega_z = msg->angular_velocity.z;
-  
+
+  // Detect stationary state (in simulation, speed is very close to 0 when stopped)
+  const double stationary_speed_threshold = 0.01;  // 0.01 m/s (~0.036 km/h)
+  bool is_stationary = (current_speed_ < stationary_speed_threshold);
+
   // State prediction
   Eigen::Vector3d state_pred = ekf_state_;
-  state_pred(0) += current_speed_ * cos(ekf_state_(2)) * dt;
-  state_pred(1) += current_speed_ * sin(ekf_state_(2)) * dt;
-  state_pred(2) += omega_z * dt;
-  state_pred(2) = normalizeAngle(state_pred(2));
+
+  if (!is_stationary) {
+    // Only integrate when vehicle is moving to prevent drift accumulation
+    state_pred(0) += current_speed_ * cos(ekf_state_(2)) * dt;
+    state_pred(1) += current_speed_ * sin(ekf_state_(2)) * dt;
+    state_pred(2) += omega_z * dt;
+    state_pred(2) = normalizeAngle(state_pred(2));
+  }
+  // When stationary, state remains unchanged (no drift)
 
   // Jacobian of state transition
   Eigen::Matrix3d F = Eigen::Matrix3d::Identity();
-  F(0, 2) = -current_speed_ * sin(ekf_state_(2)) * dt;
-  F(1, 2) = current_speed_ * cos(ekf_state_(2)) * dt;
+  if (!is_stationary) {
+    F(0, 2) = -current_speed_ * sin(ekf_state_(2)) * dt;
+    F(1, 2) = current_speed_ * cos(ekf_state_(2)) * dt;
+  }
 
   // Covariance prediction
   Eigen::Matrix3d P_pred = F * ekf_P_ * F.transpose() + Q_;
@@ -309,7 +329,7 @@ void IMUGPSToOdometry::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
 
     new_gps_position_ = false;
   }
-  // GPS heading update
+  // GPS heading update (only when vehicle is moving)
   if (new_gps_heading_) {
     double z_heading = gps_heading_meas_;
     double h_heading = state_update(2);
@@ -325,6 +345,30 @@ void IMUGPSToOdometry::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
     P_update = (Eigen::Matrix3d::Identity() - K_heading * H_heading.transpose()) * P_update;
 
     new_gps_heading_ = false;
+  }
+
+  // IMU orientation update (always available, very accurate in simulation)
+  // This helps maintain accurate heading even when stationary
+  {
+    tf2::Quaternion q;
+    tf2::fromMsg(msg->orientation, q);
+    double roll, pitch, imu_yaw;
+    tf2::Matrix3x3(q).getRPY(roll, pitch, imu_yaw);
+
+    double z_heading = imu_yaw;
+    double h_heading = state_update(2);
+    double residual_heading = angleDiff(z_heading, h_heading);
+
+    Eigen::Vector3d H_heading = Eigen::Vector3d::Zero();
+    H_heading(2) = 1.0;
+
+    // Use very low measurement noise for IMU orientation in simulation
+    double R_imu_heading = 0.01;  // Much lower than GPS heading noise
+    double S_heading = H_heading.transpose() * P_update * H_heading + R_imu_heading;
+    Eigen::Vector3d K_heading = P_update * H_heading / S_heading;
+
+    state_update = state_update + K_heading * residual_heading;
+    P_update = (Eigen::Matrix3d::Identity() - K_heading * H_heading.transpose()) * P_update;
   }
 
   // Update EKF state

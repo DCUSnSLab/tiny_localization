@@ -14,17 +14,19 @@
             min_speed_for_heading: 0.6 # Minimum speed threshold for reliable heading calculation (m/s)
 
         # EKF Process Noise Settings - Q Matrix
+        # Lower values for simulation environment (sensors are more accurate)
         process_noise:
-            x: 0.3 # Process noise for x position
-            y: 0.3 # Process noise for y position
-            yaw: 0.3 # Process noise for heading/yaw
+            x: 0.01 # Process noise for x position (low for accurate simulation)
+            y: 0.01 # Process noise for y position (low for accurate simulation)
+            yaw: 0.001 # Process noise for heading/yaw (low for accurate simulation)
 
         # EKF Measurement Noise Settings - R Matrix
+        # Lower values for simulation environment (sensors are more accurate)
         measurement_noise:
             position:
-                x: 0.1 # Measurement noise for x position
-                y: 0.1 # Measurement noise for y position
-            heading: 0.7 # Measurement noise for heading/yaw
+                x: 0.05 # Measurement noise for x position (low for accurate GPS in sim)
+                y: 0.05 # Measurement noise for y position (low for accurate GPS in sim)
+            heading: 0.3 # Measurement noise for GPS heading (moderate)
 
         # Initial EKF Settings
         ekf_initial:
