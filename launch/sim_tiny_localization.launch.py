@@ -6,20 +6,9 @@ from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-from ament_index_python.packages import get_package_share_directory
-import os
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='true') # 시뮬레이션 환경인 경우 true, 밖이면 false
-
-    map_file = PathJoinSubstitution([
-                    FindPackageShare('gmserver'),
-                    'maps',
-                    'zzzzz.json'
-                ])
-
-    # Package directory
-    pkg_dir = get_package_share_directory('tiny_localization')
     
     # Launch arguments
     use_sim_time_arg = DeclareLaunchArgument(
@@ -58,7 +47,7 @@ def generate_launch_description():
     
     map_file_path_arg = DeclareLaunchArgument(
         'map_file_path',
-        default_value=map_file,
+        default_value='',
         description='Path to map JSON file for map frame broadcast'
     )
     
